@@ -2,13 +2,12 @@
 mod chacha_tests {
     extern crate seal_rs;
 
-    use seal_rs::chacha::ChaCha20;
+    use hex_literal::hex;
 
-    const TEST_KEY: [u32; 8] = [
-        0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f, 0x10111213, 0x14151617, 0x18191a1b,
-        0x1c1d1e1f,
-    ];
-    const TEST_NONCE: [u32; 3] = [0x00000009, 0x0000004a, 0x00000000];
+    use seal_rs::chacha::ChaCha20Block;
+
+    const TEST_KEY: [u8; 32] = hex!("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
+    const TEST_NONCE: [u8; 12] = hex!("000000090000004a00000000");
 
     ///
     /// Simple test to verify that the quarter round operation is working correctly.
@@ -18,11 +17,11 @@ mod chacha_tests {
     ///
     #[test]
     fn simple_quarter_round_test() {
-        let key = [0x11111111, 0x01020304, 0x9b8d6f43, 0x01234567, 0, 0, 0, 0];
-        let mut cipher = ChaCha20::new(key, TEST_NONCE);
-        cipher.quarter_round(4, 5, 6, 7);
+        let key: [u8; 32] = hex!("1111111104030201436f8d9b6745230100000000000000000000000000000000");
+        let mut block = ChaCha20Block::new(key, TEST_NONCE, 1);
+        block.quarter_round(4, 5, 6, 7);
 
-        let result_state = cipher.get_state();
+        let result_state = block.get_state();
         assert_eq!(result_state[4], 0xea2a92f4);
         assert_eq!(result_state[5], 0xcb1cf8ce);
         assert_eq!(result_state[6], 0x4581472e);
@@ -37,10 +36,10 @@ mod chacha_tests {
     ///
     #[test]
     fn simple_block_test() {
-        let mut cipher = ChaCha20::new(TEST_KEY, TEST_NONCE);
-        cipher.block();
+        let mut block = ChaCha20Block::new(TEST_KEY, TEST_NONCE, 1);
+        block.block();
 
-        let result_state = cipher.get_state();
+        let result_state = block.get_state();
 
         let expected = [
             0xe4e7f110, 0x15593bd1, 0x1fdd0f50, 0xc47120a3, 0xc7f4d1c7, 0x0368c033, 0x9aaa2204,
@@ -58,24 +57,10 @@ mod chacha_tests {
     /// [Source](https://datatracker.ietf.org/doc/html/rfc7539#section-2.4.2)
     ///
     #[test]
-    fn simple_encrypt_test() {
-        let nonce = [0x00000000, 0x0000004a, 0x00000000];
+    fn simple_keystream_test() {
+        let mut block = ChaCha20Block::new(TEST_KEY, TEST_NONCE, 1);
 
-        let mut cipher = ChaCha20::new(TEST_KEY, nonce);
-
-        let result = cipher.encrypt(&[
-            0x4c616469, 0x65732061, 0x6e642047, 0x656e746c, 0x656d656e, 0x206f6620, 0x74686520,
-            0x636c6173, 0x73206f66, 0x20273939, 0x3a204966, 0x20492063, 0x6f756c64, 0x206f6666,
-            0x65722079, 0x6f75206f,
-        ]);
-        result.iter().for_each(|x| print!("{:08x} ", x));
-
-        // let expected = [
-        //     0xe4e7f110, 0x15593bd1, 0x1fdd0f50, 0xc47120a3, 0xc7f4d1c7, 0x0368c033, 0x9aaa2204,
-        //     0x4e6cd4c3, 0x466482d2, 0x09aa9f07, 0x05d7c214, 0xa2028bd9, 0xd19c12b5, 0xb94e16de,
-        //     0xe883d0cb, 0x4e3c50a2,
-        // ];
-
-        // assert_eq!(result_state, &expected);
+        let expected = hex!("10f1e7e4d13b5915500fdd1fa32071c4c7d1f4c733c068030422aa9ac3d46c4ed2826446079faa0914c2d705d98b02a2b5129cd1de164eb9cbd083e8a2503c4e");
+        assert_eq!(block.get_keystream(), expected)
     }
 }

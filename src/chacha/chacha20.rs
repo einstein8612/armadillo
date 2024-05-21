@@ -1,20 +1,27 @@
-pub struct ChaCha20 {
+const KEY_LENGTH: usize = 32;
+const NONCE_LENGTH: usize = 12;
+const BLOCK_LENGTH: usize = 64;
+
+type Key = [u8; KEY_LENGTH];
+type Nonce = [u8; NONCE_LENGTH];
+
+pub struct ChaCha20Block {
     state: [u32; 16],
 }
 
-impl ChaCha20 {
+impl ChaCha20Block {
 
     ///
-    /// The ChaCha20 constructor initializes the state array with the provided
+    /// The ChaCha20Block constructor initializes the state array with the provided
     /// key and nonce.  The key is 256-bits and the nonce is 64-bits.  The state
     /// array is initialized as follows:
-    /// 
+    ///
     /// 1. The first four words are constants: 0x61707865, 0x3320646e, 0x79622d32, and 0x6b206574.
     /// 2. The next eight words (4-11) are taken from the 256-bit key by reading the bytes in little-endian order, in 4-byte chunks.
     /// 3. Word 12 is a block counter.  Since each block is 64 bytes, a 32-bit word allows for encrypting 2^6B * 2^32 = 2^38B = 256GB.
     /// 4. Words 13-15 are a nonce, which should not be repeated for the same key.
     /// They are taken by reading the bytes in little-endian order, in 4-byte chunks.
-    /// 
+    ///
     /// Visual representation as a matrix of the state array:
     /// 
     /// ```
@@ -23,11 +30,12 @@ impl ChaCha20 {
     /// kkkkkkkk  kkkkkkkk  kkkkkkkk  kkkkkkkk
     /// bbbbbbbb  nnnnnnnn  nnnnnnnn  nnnnnnnn
     /// ```
-    /// 
+    ///
     /// c=constant k=key b=blockcount n=nonce
-    /// 
+    ///
     /// [Source](https://datatracker.ietf.org/doc/html/rfc7539#section-2.3)
-    pub fn new(key: [u32; 8], nonce: [u32; 3]) -> Self {
+    ///
+    pub fn new(key: Key, nonce: Nonce, counter: u32) -> Self {
         let mut state = [0u32; 16];
         // Add the constants to the state array
         state[0] = 0x61707865;
@@ -35,35 +43,37 @@ impl ChaCha20 {
         state[2] = 0x79622d32;
         state[3] = 0x6b206574;
 
+        
+
         // Add the key to the state array
-        for (i, key_part) in key.iter().enumerate() {
-            state[4+i] = u32::from_be_bytes(key_part.to_le_bytes());
+        for (i, key_part) in key.chunks_exact(4).into_iter().enumerate() {
+            state[4+i] = u32::from_le_bytes(key_part.try_into().unwrap());
         }
 
         // Add the block counter to the state array
-        state[12] = 1;
+        state[12] = counter;
 
         // Add the nonce to the state array
-        for (i, nonce_part) in nonce.iter().enumerate() {
-            state[13+i] = u32::from_be_bytes(nonce_part.to_le_bytes());
+        for (i, nonce_part) in nonce.chunks_exact(4).into_iter().enumerate() {
+            state[13+i] = u32::from_le_bytes(nonce_part.try_into().unwrap());
         }
 
-        ChaCha20 { state }
+        ChaCha20Block { state }
     }
 
     ///
     /// The basic operation of the ChaCha algorithm is the quarter round.  It
     /// operates on four 32-bit unsigned integers, denoted a, b, c, and d.
     /// The operation is as follows:
-    /// 
+    ///
     /// 1.  a += b; d ^= a; d <<= 16;
     /// 2.  c += d; b ^= c; b <<= 12;
     /// 3.  a += b; d ^= a; d <<= 8;
     /// 4.  c += d; b ^= c; b <<= 7;
-    /// 
+    ///
     /// Where all operations are wrapping additions, and the left shift is a
     /// circular rotation.
-    /// 
+    ///
     /// [Source](https://datatracker.ietf.org/doc/html/rfc7539#section-2.1)
     ///
     pub fn quarter_round(&mut self, x: usize, y: usize, z: usize, w: usize) {
@@ -125,6 +135,14 @@ impl ChaCha20 {
         });
     }
 
+    ///
+    /// Gets the current state of the ChaCha20 cipher.
+    ///
+    pub fn get_keystream(&mut self) -> [u8; BLOCK_LENGTH] {
+        self.block();
+        self.state.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>().try_into().unwrap()
+    }
+
     pub fn encrypt(&mut self, data: &[u32]) -> [u32; 16] {
         self.block();
         
@@ -136,9 +154,9 @@ impl ChaCha20 {
         key_stream
     }
 
-    /// 
+    ///
     /// Gets the current state of the ChaCha20 cipher.
-    /// 
+    ///
     pub fn get_state(&self) -> &[u32; 16] {
         &self.state
     }
