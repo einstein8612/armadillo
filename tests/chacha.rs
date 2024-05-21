@@ -4,7 +4,7 @@ mod chacha_tests {
 
     use hex_literal::hex;
 
-    use seal_rs::chacha::ChaCha20Block;
+    use seal_rs::chacha::{ChaCha20, ChaCha20Block};
 
     const TEST_KEY: [u8; 32] = hex!("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
     const TEST_NONCE: [u8; 12] = hex!("000000090000004a00000000");
@@ -51,7 +51,7 @@ mod chacha_tests {
     }
 
     ///
-    /// Simple test to verify that the encrypt operation is working correctly.
+    /// Simple test to verify that the keystream operation is working correctly.
     ///
     /// Taken from the RFC7539 specification.
     /// [Source](https://datatracker.ietf.org/doc/html/rfc7539#section-2.4.2)
@@ -62,5 +62,22 @@ mod chacha_tests {
 
         let expected = hex!("10f1e7e4d13b5915500fdd1fa32071c4c7d1f4c733c068030422aa9ac3d46c4ed2826446079faa0914c2d705d98b02a2b5129cd1de164eb9cbd083e8a2503c4e");
         assert_eq!(block.get_keystream(), expected)
+    }
+
+
+    ///
+    /// Simple test to verify that the encrypt operation is working correctly.
+    ///
+    /// Taken from the RFC7539 specification.
+    /// [Source](https://datatracker.ietf.org/doc/html/rfc7539#section-2.4.2)
+    ///
+    #[test]
+    fn helloworld_encrypt_test() {
+        let nonce = hex!("000000000000004a00000000");
+        let mut cipher = ChaCha20::new(TEST_KEY, nonce);
+
+        let expected = hex!("6e2e359a2568f98041ba0728dd0d6981e97e7aec1d4360c20a27afccfd9fae0bf91b65c5524733ab8f593dabcd62b3571639d624e65152ab8f530c359f0861d807ca0dbf500d6a6156a38e088a22b65e52bc514d16ccf806818ce91ab77937365af90bbf74a35be6b40b8eedf2785e42874d");
+        let ciphertext = cipher.encrypt("Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.".as_bytes());
+        assert_eq!(ciphertext, expected);
     }
 }

@@ -9,6 +9,12 @@ pub struct ChaCha20Block {
     state: [u32; 16],
 }
 
+pub struct ChaCha20 {
+    key: Key,
+    nonce: Nonce,
+    counter: u32,
+}
+
 impl ChaCha20Block {
 
     ///
@@ -136,7 +142,7 @@ impl ChaCha20Block {
     }
 
     ///
-    /// Gets the current state of the ChaCha20 cipher.
+    /// Generates the keystream from the state by running ChaCha20.
     ///
     pub fn get_keystream(&mut self) -> [u8; BLOCK_LENGTH] {
         self.block();
@@ -159,5 +165,22 @@ impl ChaCha20Block {
     ///
     pub fn get_state(&self) -> &[u32; 16] {
         &self.state
+    }
+}
+
+impl ChaCha20 {
+    pub fn new(key: Key, nonce: Nonce) -> Self {
+        ChaCha20 { key, nonce, counter: 1 }
+    }
+
+    pub fn encrypt(&mut self, data: &[u8]) -> Vec<u8> {
+        let blocks = (data.len() + BLOCK_LENGTH - 1) / BLOCK_LENGTH;
+        let keystream = (0..blocks).flat_map(|i| {
+            let mut block = ChaCha20Block::new(self.key, self.nonce, self.counter + i as u32);
+            block.get_keystream()
+        }).collect::<Vec<u8>>();
+        self.counter += blocks as u32;
+
+        keystream.iter().zip(data).map(|(x, y)| x ^ y).collect::<Vec<u8>>()
     }
 }
