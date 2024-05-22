@@ -2,8 +2,8 @@ const KEY_LENGTH: usize = 32;
 const NONCE_LENGTH: usize = 12;
 const BLOCK_LENGTH: usize = 64;
 
-type Key = [u8; KEY_LENGTH];
-type Nonce = [u8; NONCE_LENGTH];
+pub type Key = [u8; KEY_LENGTH];
+pub type Nonce = [u8; NONCE_LENGTH];
 
 pub struct ChaCha20Block {
     state: [u32; 16],
