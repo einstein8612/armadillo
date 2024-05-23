@@ -7,6 +7,7 @@ mod chacha_tests {
     use seal_rs::poly1305::{poly1305_mac, poly1305_r_clamp, R};
 
     const TEST_KEY: [u8; 32] = hex!("85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b");
+    const TEST_DATA: [u8; 34] = hex!("43727970746f6772617068696320466f72756d2052657365617263682047726f7570");
 
     ///
     /// Simple test to verify that the clamp operation is working correctly.
@@ -33,6 +34,9 @@ mod chacha_tests {
 
     #[test]
     fn simple_poly1305_mac_test() {
-        poly1305_mac(TEST_KEY);
+        let expected = hex!("a8061dc1305136c6c22b8baf0c0127a9");
+        let code = poly1305_mac(TEST_KEY, &TEST_DATA);
+
+        assert_eq!(code, expected);
     }
 }

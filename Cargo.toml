@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+num-bigint = "0.4.5"
 
 [dev-dependencies]
 hex-literal = "0.4.1"
