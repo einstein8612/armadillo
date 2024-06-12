@@ -19,7 +19,7 @@ pub type Key = [u8; 32];
 /// This method was adapted from poly1305aes_test_clamp.c version 20050207
 /// D. J. Bernstein
 /// Public domain.
-/// 
+///
 /// Summarising the method into a single and for performance reasons
 ///
 /// [Source](https://datatracker.ietf.org/doc/html/rfc7539#section-2.5)
@@ -27,8 +27,6 @@ pub type Key = [u8; 32];
 pub fn poly1305_r_clamp(r: R) -> R {
     r & 0x0ffffffc0ffffffc0ffffffc0fffffff
 }
-
-
 
 // clamp(r): r &= 0x0ffffffc0ffffffc0ffffffc0fffffff
 // poly1305_mac(msg, key):
@@ -46,22 +44,31 @@ pub fn poly1305_r_clamp(r: R) -> R {
 //    a += s
 //    return num_to_16_le_bytes(a)
 //    end
-pub fn poly1305_mac(key: Key, data: &[u8]) -> [u8; 16]  {
-    let r = poly1305_r_clamp(u128::from_le_bytes(key[0..16].try_into().unwrap())).to_biguint().unwrap();
-    let s = u128::from_le_bytes(key[16..32].try_into().unwrap()).to_biguint().unwrap();
+pub fn poly1305_mac(key: Key, data: &[u8]) -> [u8; 16] {
+    let r = poly1305_r_clamp(u128::from_le_bytes(key[0..16].try_into().unwrap()))
+        .to_biguint()
+        .unwrap();
+    let s = u128::from_le_bytes(key[16..32].try_into().unwrap())
+        .to_biguint()
+        .unwrap();
 
     let mut accumulator = 0.to_biguint().unwrap();
-    let p = 2.to_biguint().unwrap().pow(130).sub(5.to_biguint().unwrap());
+    let p = 2
+        .to_biguint()
+        .unwrap()
+        .pow(130)
+        .sub(5.to_biguint().unwrap());
     for i in 1..=(data.len().div_ceil(16)) {
-        let mut n_bytes = data[((i-1)*16)..(i*16).min(data.len())].to_vec();
+        let mut n_bytes = data[((i - 1) * 16)..(i * 16).min(data.len())].to_vec();
         n_bytes.push(0x01u8);
 
         let n = BigUint::from_bytes_le(&n_bytes);
         accumulator += n;
         accumulator = (r.clone() * accumulator) % p.clone();
     }
-    
+
     // Only the last 16 bytes are needed
-    let code = ((accumulator + s) & 0xffffffffffffffffffffffffffffffffu128.to_biguint().unwrap()).to_bytes_le();
+    let code = ((accumulator + s) & 0xffffffffffffffffffffffffffffffffu128.to_biguint().unwrap())
+        .to_bytes_le();
     code.try_into().unwrap()
 }

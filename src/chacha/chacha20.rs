@@ -16,7 +16,6 @@ pub struct ChaCha20 {
 }
 
 impl ChaCha20Block {
-
     ///
     /// The ChaCha20Block constructor initializes the state array with the provided
     /// key and nonce.  The key is 256-bits and the nonce is 64-bits.  The state
@@ -29,7 +28,7 @@ impl ChaCha20Block {
     /// They are taken by reading the bytes in little-endian order, in 4-byte chunks.
     ///
     /// Visual representation as a matrix of the state array:
-    /// 
+    ///
     /// ```
     /// cccccccc  cccccccc  cccccccc  cccccccc
     /// kkkkkkkk  kkkkkkkk  kkkkkkkk  kkkkkkkk
@@ -49,19 +48,17 @@ impl ChaCha20Block {
         state[2] = 0x79622d32;
         state[3] = 0x6b206574;
 
-        
-
         // Add the key to the state array
-        for (i, key_part) in key.chunks_exact(4).into_iter().enumerate() {
-            state[4+i] = u32::from_le_bytes(key_part.try_into().unwrap());
+        for (i, key_part) in key.chunks_exact(4).enumerate() {
+            state[4 + i] = u32::from_le_bytes(key_part.try_into().unwrap());
         }
 
         // Add the block counter to the state array
         state[12] = counter;
 
         // Add the nonce to the state array
-        for (i, nonce_part) in nonce.chunks_exact(4).into_iter().enumerate() {
-            state[13+i] = u32::from_le_bytes(nonce_part.try_into().unwrap());
+        for (i, nonce_part) in nonce.chunks_exact(4).enumerate() {
+            state[13 + i] = u32::from_le_bytes(nonce_part.try_into().unwrap());
         }
 
         ChaCha20Block { state }
@@ -87,25 +84,32 @@ impl ChaCha20Block {
         let mut b = self.state[y];
         let mut c = self.state[z];
         let mut d = self.state[w];
-        
+
         // 1. a += b; d ^= a; d <<= 16;
-        a = a.wrapping_add(b); d ^= a; d = d.rotate_left(16);
+        a = a.wrapping_add(b);
+        d ^= a;
+        d = d.rotate_left(16);
 
         // 2. c += d; b ^= c; b <<= 12;
-        c = c.wrapping_add(d); b ^= c; b = b.rotate_left(12);
+        c = c.wrapping_add(d);
+        b ^= c;
+        b = b.rotate_left(12);
 
         // 3. a += b; d ^= a; d <<= 8;
-        a = a.wrapping_add(b); d ^= a; d = d.rotate_left(8);
+        a = a.wrapping_add(b);
+        d ^= a;
+        d = d.rotate_left(8);
 
         // 4. c += d; b ^= c; b <<= 7;
-        c = c.wrapping_add(d); b ^= c; b = b.rotate_left(7);
+        c = c.wrapping_add(d);
+        b ^= c;
+        b = b.rotate_left(7);
 
         self.state[x] = a;
         self.state[y] = b;
         self.state[z] = c;
         self.state[w] = d;
     }
-
 
     ///
     /// The ChaCha20 block function is the core of the ChaCha20 algorithm.  It
@@ -121,7 +125,7 @@ impl ChaCha20Block {
     /// [Source](https://datatracker.ietf.org/doc/html/rfc7539#section-2.3.1)
     ///
     pub fn block(&mut self) {
-        let old_state = self.state.clone();
+        let old_state = self.state;
 
         // 80 rounds of quarter rounds
         for _ in 0..10 {
@@ -146,13 +150,18 @@ impl ChaCha20Block {
     ///
     pub fn get_keystream(&mut self) -> [u8; BLOCK_LENGTH] {
         self.block();
-        self.state.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>().try_into().unwrap()
+        self.state
+            .iter()
+            .flat_map(|x| x.to_le_bytes())
+            .collect::<Vec<u8>>()
+            .try_into()
+            .unwrap()
     }
 
     pub fn encrypt(&mut self, data: &[u32]) -> [u32; 16] {
         self.block();
-        
-        let old_state = self.state.clone();
+
+        let old_state = self.state;
         let mut key_stream = old_state.map(|x| u32::from_be_bytes(x.to_le_bytes()));
         key_stream.iter_mut().zip(&data[..16]).for_each(|(x, &y)| {
             *x ^= y;
@@ -170,17 +179,27 @@ impl ChaCha20Block {
 
 impl ChaCha20 {
     pub fn new(key: Key, nonce: Nonce) -> Self {
-        ChaCha20 { key, nonce, counter: 1 }
+        ChaCha20 {
+            key,
+            nonce,
+            counter: 1,
+        }
     }
 
     pub fn encrypt(&mut self, data: &[u8]) -> Vec<u8> {
         let blocks = (data.len() + BLOCK_LENGTH - 1) / BLOCK_LENGTH;
-        let keystream = (0..blocks).flat_map(|i| {
-            let mut block = ChaCha20Block::new(self.key, self.nonce, self.counter + i as u32);
-            block.get_keystream()
-        }).collect::<Vec<u8>>();
+        let keystream = (0..blocks)
+            .flat_map(|i| {
+                let mut block = ChaCha20Block::new(self.key, self.nonce, self.counter + i as u32);
+                block.get_keystream()
+            })
+            .collect::<Vec<u8>>();
         self.counter += blocks as u32;
 
-        keystream.iter().zip(data).map(|(x, y)| x ^ y).collect::<Vec<u8>>()
+        keystream
+            .iter()
+            .zip(data)
+            .map(|(x, y)| x ^ y)
+            .collect::<Vec<u8>>()
     }
 }

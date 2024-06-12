@@ -6,7 +6,8 @@ mod chacha_tests {
 
     use seal_rs::chacha::{ChaCha20, ChaCha20Block};
 
-    const TEST_KEY: [u8; 32] = hex!("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
+    const TEST_KEY: [u8; 32] =
+        hex!("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
     const TEST_NONCE: [u8; 12] = hex!("000000090000004a00000000");
 
     ///
@@ -17,7 +18,8 @@ mod chacha_tests {
     ///
     #[test]
     fn simple_quarter_round_test() {
-        let key: [u8; 32] = hex!("1111111104030201436f8d9b6745230100000000000000000000000000000000");
+        let key: [u8; 32] =
+            hex!("1111111104030201436f8d9b6745230100000000000000000000000000000000");
         let mut block = ChaCha20Block::new(key, TEST_NONCE, 1);
         block.quarter_round(4, 5, 6, 7);
 
@@ -63,7 +65,6 @@ mod chacha_tests {
         let expected = hex!("10f1e7e4d13b5915500fdd1fa32071c4c7d1f4c733c068030422aa9ac3d46c4ed2826446079faa0914c2d705d98b02a2b5129cd1de164eb9cbd083e8a2503c4e");
         assert_eq!(block.get_keystream(), expected)
     }
-
 
     ///
     /// Simple test to verify that the encrypt operation is working correctly.

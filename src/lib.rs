@@ -1,2 +1,2 @@
 pub mod chacha;
-pub mod poly1305;
+pub mod poly;
