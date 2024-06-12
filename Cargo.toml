@@ -1,7 +1,10 @@
 [package]
 name = "seal-rs"
+description = "A simple Rust library to effectively encrypt and decrypt data. Meant to take the thinking away from the security."
 version = "0.0.1"
 edition = "2021"
+
+license = "MIT"
 
 [dependencies]
 num-bigint = "0.4.5"
