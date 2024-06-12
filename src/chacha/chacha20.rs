@@ -29,7 +29,7 @@ impl ChaCha20Block {
     ///
     /// Visual representation as a matrix of the state array:
     ///
-    /// ```
+    /// ```notrust
     /// cccccccc  cccccccc  cccccccc  cccccccc
     /// kkkkkkkk  kkkkkkkk  kkkkkkkk  kkkkkkkk
     /// kkkkkkkk  kkkkkkkk  kkkkkkkk  kkkkkkkk
