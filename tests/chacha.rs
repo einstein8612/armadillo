@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod chacha_tests {
-    extern crate seal_rs;
+    extern crate armadillo;
 
     use hex_literal::hex;
 
-    use seal_rs::chacha::{ChaCha20, ChaCha20Block};
+    use armadillo::chacha::{ChaCha20, ChaCha20Block};
 
     const TEST_KEY: [u8; 32] =
         hex!("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");

@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod chacha_tests {
-    extern crate seal_rs;
+    extern crate armadillo;
 
     use hex_literal::hex;
 
-    use seal_rs::poly::{poly1305_mac, poly1305_r_clamp, R};
+    use armadillo::poly::{poly1305_mac, poly1305_r_clamp, R};
 
     const TEST_KEY: [u8; 32] =
         hex!("85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b");
